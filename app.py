@@ -1,23 +1,26 @@
 from flask import Flask, request, jsonify, render_template
 import anthropic
 import os
+import json
+import re
 
 app = Flask(__name__)
 
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY")
 
-PROMPT = """당신은 계약서 분석 전문가입니다. 아래 계약서를 분석하여 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
+PROMPT = """당신은 계약서 분석 전문가입니다. 아래 계약서를 분석하여 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요. 큰따옴표 안에 큰따옴표를 사용하지 마세요.
 
 계약서:
-\"\"\"
+---
 {text}
-\"\"\"
+---
 
-다음 JSON 구조로만 응답:
+다음 JSON 구조로만 응답하세요:
 {{
-  "summary": "계약서 전체 요약 (2-3문장)",
+  "summary": "계약서 전체 요약 2-3문장",
   "risks": [
-    {{"level": "high|medium|low", "title": "위험조항 제목", "detail": "상세 설명"}}
+    {{"level": "high", "title": "위험조항 제목", "detail": "상세 설명"}},
+    {{"level": "medium", "title": "위험조항 제목", "detail": "상세 설명"}}
   ],
   "keyPoints": ["핵심 포인트 1", "핵심 포인트 2", "핵심 포인트 3"],
   "suggestions": ["수정 제안 1", "수정 제안 2", "수정 제안 3"],
@@ -50,12 +53,17 @@ def analyze():
         )
 
         raw = message.content[0].text.strip()
-        raw = raw.replace("```json", "").replace("```", "").strip()
+        # 마크다운 코드블록 제거
+        raw = re.sub(r'```json\s*', '', raw)
+        raw = re.sub(r'```\s*', '', raw)
+        raw = raw.strip()
 
-        import json
+        # JSON 파싱
         result = json.loads(raw)
         return jsonify(result)
 
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"분석 결과 파싱 오류. 다시 시도해주세요."}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
