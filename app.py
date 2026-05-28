@@ -8,15 +8,23 @@ app = Flask(__name__)
 
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY")
 
-PROMPT = """계약서를 분석해서 아래 JSON 형식으로만 답하세요. JSON 외 다른 말은 하지 마세요. 문자열 안에 큰따옴표(")를 쓰지 마세요.
+PROMPT = """You are a Korean contract analysis expert. Analyze the contract below and respond ONLY with valid JSON. No other text.
 
-계약서:
+Contract:
 ---
 {text}
 ---
 
-반드시 이 형식으로만:
-{{"summary":"요약","risks":[{{"level":"high","title":"제목","detail":"설명"}}],"keyPoints":["포인트1","포인트2"],"suggestions":["제안1","제안2"],"negotiation":["협상1","협상2"]}}"""
+Respond with exactly this JSON structure:
+{{
+  "summary": "2-3 sentence summary in Korean",
+  "risks": [
+    {{"level": "high", "title": "risk title in Korean", "detail": "detail in Korean"}}
+  ],
+  "keyPoints": ["point 1 in Korean", "point 2 in Korean"],
+  "suggestions": ["suggestion 1 in Korean", "suggestion 2 in Korean"],
+  "negotiation": ["negotiation point 1 in Korean", "negotiation point 2 in Korean"]
+}}"""
 
 @app.route("/")
 def index():
@@ -44,22 +52,26 @@ def analyze():
         )
 
         raw = message.content[0].text.strip()
+        print(f"Claude raw response: {raw[:500]}", flush=True)
+
         raw = re.sub(r'```json\s*', '', raw)
         raw = re.sub(r'```\s*', '', raw)
         raw = raw.strip()
 
-        # JSON 시작/끝 추출
         start = raw.find('{')
         end = raw.rfind('}') + 1
         if start != -1 and end > start:
             raw = raw[start:end]
 
         result = json.loads(raw)
+        print(f"Parsed result keys: {list(result.keys())}", flush=True)
         return jsonify(result)
 
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        print(f"JSON error: {e}, raw: {raw[:300]}", flush=True)
         return jsonify({"error": "다시 시도해주세요."}), 500
     except Exception as e:
+        print(f"Exception: {e}", flush=True)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
