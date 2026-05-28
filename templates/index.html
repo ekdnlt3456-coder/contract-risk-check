@@ -2,39 +2,46 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>CL Contract AI - 계약서 위험 분석</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', sans-serif; background: #f8f8f6; color: #1a1a1a; min-height: 100vh; }
-.wrap { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1rem; }
 .logo { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: #888; margin-bottom: 8px; }
-h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
-.sub { font-size: 15px; color: #666; margin-bottom: 2.5rem; }
-.card { background: #fff; border-radius: 16px; border: 1px solid #e8e8e4; padding: 1.5rem; margin-bottom: 1rem; }
+h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.sub { font-size: 14px; color: #666; margin-bottom: 2rem; line-height: 1.5; }
+.card { background: #fff; border-radius: 16px; border: 1px solid #e8e8e4; padding: 1.25rem; margin-bottom: 1rem; }
 label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 8px; letter-spacing: 0.04em; }
-textarea { width: 100%; height: 240px; border: 1px solid #e0e0db; border-radius: 10px; padding: 14px; font-size: 14px; font-family: inherit; color: #1a1a1a; background: #fafaf8; resize: vertical; line-height: 1.7; outline: none; }
+textarea { width: 100%; height: 200px; border: 1px solid #e0e0db; border-radius: 10px; padding: 12px; font-size: 14px; font-family: inherit; color: #1a1a1a; background: #fafaf8; resize: vertical; line-height: 1.7; outline: none; -webkit-appearance: none; }
 textarea:focus { border-color: #aaa; }
 textarea::placeholder { color: #bbb; }
-.btn { width: 100%; height: 50px; background: #1a1a1a; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; font-family: inherit; margin-top: 1rem; }
-.btn:hover { opacity: 0.85; }
+.btn { width: 100%; height: 52px; background: #1a1a1a; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 1rem; -webkit-appearance: none; touch-action: manipulation; }
+.btn:active { opacity: 0.7; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .disclaimer { font-size: 11px; color: #bbb; text-align: center; margin-top: 10px; line-height: 1.6; }
-.result { margin-top: 2rem; display: none; }
+.result { margin-top: 1.5rem; }
 .section { background: #fff; border: 1px solid #e8e8e4; border-radius: 14px; margin-bottom: 10px; overflow: hidden; }
-.sec-head { padding: 14px 18px; display: flex; align-items: center; gap: 10px; background: #fafaf8; border-bottom: 1px solid #f0f0ec; }
-.badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.sec-head { padding: 12px 16px; display: flex; align-items: center; gap: 8px; background: #fafaf8; border-bottom: 1px solid #f0f0ec; }
+.badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
 .b-danger { background: #fee; color: #c00; }
 .b-warning { background: #fff3e0; color: #e65c00; }
 .b-success { background: #e8f5e9; color: #2e7d32; }
 .b-info { background: #e3f2fd; color: #1565c0; }
 .sec-label { font-size: 14px; font-weight: 600; }
-.sec-body { padding: 16px 18px; font-size: 14px; color: #444; line-height: 1.8; white-space: pre-wrap; }
+.sec-body { padding: 14px 16px; font-size: 14px; color: #444; line-height: 1.8; white-space: pre-wrap; word-break: keep-all; }
 .dots { display: inline-flex; gap: 5px; align-items: center; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: b 1.2s infinite; }
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
 @keyframes b { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+@media (max-width: 480px) {
+  .wrap { padding: 1.25rem 0.875rem; }
+  h1 { font-size: 22px; }
+  .card { padding: 1rem; border-radius: 12px; }
+  textarea { height: 180px; font-size: 15px; }
+  .btn { height: 54px; font-size: 17px; }
+}
 </style>
 </head>
 <body>
@@ -50,18 +57,20 @@ textarea::placeholder { color: #bbb; }
     <p class="disclaimer">※ 본 서비스는 AI 참고자료이며 법률 자문이 아닙니다. 중요한 계약은 전문가와 상담하세요.</p>
   </div>
 
-  <div class="result" id="result"></div>
+  <div id="result"></div>
 </div>
 
 <script>
 async function go() {
   const txt = document.getElementById('txt').value.trim();
   const btn = document.getElementById('btn');
+  const resultEl = document.getElementById('result');
+
   if (!txt) { alert('계약서 내용을 입력해주세요.'); return; }
 
   btn.disabled = true;
   btn.innerHTML = '<span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>';
-  document.getElementById('result').style.display = 'none';
+  resultEl.innerHTML = '';
 
   try {
     const res = await fetch('/analyze', {
@@ -69,40 +78,66 @@ async function go() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: txt })
     });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    render(data);
+
+    const raw = await res.text();
+    console.log('Raw response:', raw);
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch(e) {
+      resultEl.innerHTML = '<div class="section"><div class="sec-body">응답 파싱 오류. 다시 시도해주세요.</div></div>';
+      return;
+    }
+
+    if (data.error) {
+      resultEl.innerHTML = '<div class="section"><div class="sec-body">오류: ' + data.error + '</div></div>';
+      return;
+    }
+
+    let h = '';
+
+    if (data.summary) {
+      h += sec('b-info', '요약', '계약서 개요', data.summary);
+    }
+
+    if (data.risks && Array.isArray(data.risks)) {
+      data.risks.forEach(function(r) {
+        var bc = r.level === 'high' ? 'b-danger' : r.level === 'medium' ? 'b-warning' : 'b-success';
+        var bl = r.level === 'high' ? '위험 높음' : r.level === 'medium' ? '주의' : '낮음';
+        h += sec(bc, bl, r.title || '', r.detail || '');
+      });
+    }
+
+    if (data.keyPoints && Array.isArray(data.keyPoints) && data.keyPoints.length) {
+      h += sec('b-info', '핵심', '주요 포인트', data.keyPoints.map(function(p, i) { return (i+1) + '. ' + p; }).join('\n'));
+    }
+
+    if (data.suggestions && Array.isArray(data.suggestions) && data.suggestions.length) {
+      h += sec('b-warning', '제안', '수정 제안', data.suggestions.map(function(s, i) { return (i+1) + '. ' + s; }).join('\n'));
+    }
+
+    if (data.negotiation && Array.isArray(data.negotiation) && data.negotiation.length) {
+      h += sec('b-success', '협상', '협상 포인트', data.negotiation.map(function(n, i) { return (i+1) + '. ' + n; }).join('\n'));
+    }
+
+    if (!h) {
+      h = '<div class="section"><div class="sec-body">분석 결과를 표시할 수 없습니다. 다시 시도해주세요.</div></div>';
+    }
+
+    resultEl.innerHTML = h;
+    resultEl.scrollIntoView({ behavior: 'smooth' });
+
   } catch(e) {
-    alert('오류: ' + e.message);
+    resultEl.innerHTML = '<div class="section"><div class="sec-body">오류: ' + e.message + '</div></div>';
   } finally {
     btn.disabled = false;
     btn.innerHTML = '분석 시작';
   }
 }
 
-function render(d) {
-  let h = '';
-  h += sec('b-info', '요약', '계약서 개요', d.summary);
-  (d.risks||[]).forEach(r => {
-    const bc = r.level==='high'?'b-danger':r.level==='medium'?'b-warning':'b-success';
-    const bl = r.level==='high'?'위험 높음':r.level==='medium'?'주의':'낮음';
-    h += sec(bc, bl, r.title, r.detail);
-  });
-  if (d.keyPoints) h += sec('b-info', '핵심', '주요 포인트', d.keyPoints.map((p,i)=>`${i+1}. ${p}`).join('\n'));
-  if (d.suggestions) h += sec('b-warning', '제안', '수정 제안', d.suggestions.map((s,i)=>`${i+1}. ${s}`).join('\n'));
-  if (d.negotiation) h += sec('b-success', '협상', '협상 포인트', d.negotiation.map((n,i)=>`${i+1}. ${n}`).join('\n'));
-
-  const el = document.getElementById('result');
-  el.innerHTML = h;
-  el.style.display = 'block';
-  el.scrollIntoView({ behavior: 'smooth' });
-}
-
 function sec(badge, blabel, title, body) {
-  return `<div class="section">
-    <div class="sec-head"><span class="badge ${badge}">${blabel}</span><span class="sec-label">${title}</span></div>
-    <div class="sec-body">${body}</div>
-  </div>`;
+  return '<div class="section"><div class="sec-head"><span class="badge ' + badge + '">' + blabel + '</span><span class="sec-label">' + title + '</span></div><div class="sec-body">' + (body || '') + '</div></div>';
 }
 </script>
 </body>
