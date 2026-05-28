@@ -6,41 +6,7 @@ app = Flask(__name__)
 
 CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY")
 
-PROMPTS = {
-    "basic": """당신은 계약서 분석 전문가입니다. 아래 계약서를 분석하여 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
-
-계약서:
-\"\"\"
-{text}
-\"\"\"
-
-다음 JSON 구조로만 응답:
-{{
-  "summary": "계약서 전체 요약 (2-3문장)",
-  "risks": [
-    {{"level": "high|medium|low", "title": "위험조항 제목", "detail": "상세 설명"}}
-  ],
-  "keyPoints": ["핵심 포인트 1", "핵심 포인트 2", "핵심 포인트 3"]
-}}""",
-
-    "standard": """당신은 계약서 분석 전문가입니다. 아래 계약서를 분석하여 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
-
-계약서:
-\"\"\"
-{text}
-\"\"\"
-
-다음 JSON 구조로만 응답:
-{{
-  "summary": "계약서 전체 요약 (2-3문장)",
-  "risks": [
-    {{"level": "high|medium|low", "title": "위험조항 제목", "detail": "상세 설명"}}
-  ],
-  "keyPoints": ["핵심 포인트 1", "핵심 포인트 2", "핵심 포인트 3"],
-  "suggestions": ["수정 제안 1", "수정 제안 2", "수정 제안 3"]
-}}""",
-
-    "premium": """당신은 계약서 분석 전문가입니다. 아래 계약서를 분석하여 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
+PROMPT = """당신은 계약서 분석 전문가입니다. 아래 계약서를 분석하여 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
 
 계약서:
 \"\"\"
@@ -57,7 +23,6 @@ PROMPTS = {
   "suggestions": ["수정 제안 1", "수정 제안 2", "수정 제안 3"],
   "negotiation": ["협상 포인트 1", "협상 포인트 2", "협상 포인트 3"]
 }}"""
-}
 
 @app.route("/")
 def index():
@@ -67,7 +32,6 @@ def index():
 def analyze():
     data = request.get_json()
     text = data.get("text", "").strip()
-    tier = data.get("tier", "basic")
 
     if not text:
         return jsonify({"error": "계약서 내용을 입력해주세요."}), 400
@@ -77,7 +41,7 @@ def analyze():
 
     try:
         client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
-        prompt = PROMPTS.get(tier, PROMPTS["basic"]).format(text=text[:4000])
+        prompt = PROMPT.format(text=text[:4000])
 
         message = client.messages.create(
             model="claude-sonnet-4-5",
